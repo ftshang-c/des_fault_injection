@@ -157,10 +157,34 @@ class des():
         self.ciphered_real = None
         self.ciphered_faulty = None
 
-    def fault_injection(self, left_block, right_block, fault_num):
+    def fault_injection(self, left15_block, right15_block, fault_num, key):
         fault_arr = binvalue_to_bit_array(binvalue(pow(2,32 - fault_num), 32))
-        # print("fault num: ", fault_num)
+        print("fault num: ", fault_num)
         # print(fault_arr)
+
+        # 1. Perform XOR with fault
+        faulty_r15 = self.xor(right15_block, fault_arr)
+        # 2. Expand faulted R15
+        faulty_r15_expanded = self.expand(faulty_r15, E)
+        # 3. XOR the expanded faulty R15 with key 16
+        tmp = self.xor(self.keys[key], faulty_r15_expanded)
+        # 4. Put the XOR value through S-Box
+        tmp = self.substitute(tmp)
+        # 5. Permutate on the output of the S-Box
+        tmp = self.permut(tmp, P)
+        # 6. XOR with L15 block
+        tmp = self.xor(left15_block, tmp)
+
+        left16_block = faulty_r15
+        right16_block = tmp
+
+        if self.ciphered_faulty is None:
+            self.ciphered_faulty = []
+
+        result = list()
+        result += self.permut(right16_block + left16_block, PI_1)
+        final_res = bit_array_to_string(result)
+        self.ciphered_faulty.append(final_res)
 
     def run(self, key, text, action=ENCRYPT, padding=False):
         if len(key) < 8:
@@ -198,7 +222,7 @@ class des():
                         cpy_left = [value for value in g]
                         # print("cpy_right value:", cpy_right)
                         self.fault_injection(cpy_left, cpy_right, fault_num
-                                             + 1)
+                                             + 1, i)
                     print("d value:", d)
                     print("g value:", g)
                 d_e = self.expand(d, E)  # Expand d to match Ki size (48bits)
@@ -210,12 +234,17 @@ class des():
                 tmp = self.substitute(tmp)  # Method that will apply the SBOXes
                 tmp = self.permut(tmp, P)
                 tmp = self.xor(g, tmp)
+                # LEFT = RIGHT - 1
                 g = d
+                # RIGHT = LEFT - 1 XOR f(RIGHT - 1, K_N)
                 d = tmp
             # d + g, so d is R and g is L
             result += self.permut(d + g,
                                   PI_1)  # Do the last permut and append the result to result
         final_res = bit_array_to_string(result)
+        if self.ciphered_real is None:
+            self.ciphered_real = []
+        self.ciphered_real.append(final_res)
         if padding and action == DECRYPT:
             return self.removePadding(
                 final_res)  # Remove the padding if decrypt and padding is true
@@ -279,6 +308,11 @@ class des():
     def decrypt(self, key, text, padding=False):
         return self.run(key, text, DECRYPT, padding)
 
+    def get_ciphertext_real(self):
+        return self.ciphered_real
+
+    def get_ciphertext_faulty(self):
+        return self.ciphered_faulty
 
 if __name__ == '__main__':
     key = "secret_k"
@@ -286,9 +320,12 @@ if __name__ == '__main__':
     d = des()
     r = d.encrypt(key, text)
     # fault_1 = d.encrypt_fault()
-    r2 = d.decrypt(key, r)
+    # r2 = d.decrypt(key, r)
     print("Ciphered: %r" % r)
 
+    print(d.get_ciphertext_real())
+    print(d.get_ciphertext_faulty())
+    print(len(d.get_ciphertext_faulty()))
     #73 65 63 72 65 74 5f 6b
     #01110011
-    print("Deciphered: ", r2)
+    # print("Deciphered: ", r2)
