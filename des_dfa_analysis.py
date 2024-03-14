@@ -16,6 +16,16 @@ E = [32, 1, 2, 3, 4, 5,
      24, 25, 26, 27, 28, 29,
      28, 29, 30, 31, 32, 1]
 
+# Initial permut made on the key
+CP_1 = [57, 49, 41, 33, 25, 17, 9,
+        1, 58, 50, 42, 34, 26, 18,
+        10, 2, 59, 51, 43, 35, 27,
+        19, 11, 3, 60, 52, 44, 36,
+        63, 55, 47, 39, 31, 23, 15,
+        7, 62, 54, 46, 38, 30, 22,
+        14, 6, 61, 53, 45, 37, 29,
+        21, 13, 5, 28, 20, 12, 4]
+
 # Permut applied on shifted key to get Ki+1
 CP_2 = [14, 17, 11, 24, 1, 5, 3, 28,
         15, 6, 21, 10, 23, 19, 12, 4,
@@ -367,28 +377,41 @@ c16_d16 = reverse_table(CP_2, c16_d16, key_in_binary)
 print(c16_d16)
 
 #110010 110011 110110 001011 000011 100001 011111 110101
-# test_key = [1, 1, 0, 0, 1, 0,
-#             1, 1, 0, 0, 1, 1,
-#             1, 1, 0, 1, 1, 0,
-#             0, 0, 1, 0, 1, 1,
-#             0, 0, 0, 0, 1, 1,
-#             1, 0, 0, 0, 0, 1,
-#             0, 1, 1, 1, 1, 1,
-#             1, 1, 0, 1, 0, 1]
-# #1111000011001100101010101111
-# #0101010101100110011110001111
-# final_res = [1, 1, 1, 1, 0, 0, 0,
-#              0, 'X', 1, 0, 0, 1, 1,
-#              0, 0, 1, 'X', 1, 0, 1,
-#              'X', 1, 0, 'X', 1, 1, 1,
-#              0, 1, 0, 1, 0, 1, 'X',
-#              1, 0, 'X', 1, 0, 0, 1,
-#              'X', 0, 0, 1, 1, 1, 1,
-#              0, 0, 0, 1, 'X', 1, 1]
-#
-# res_test = ['X'] * 56
-# print("---")
-# res_test = reverse_table(CP_2, res_test, test_key)
-# print(res_test)
-# print(final_res)
+test_key = [1, 1, 0, 0, 1, 0,
+            1, 1, 0, 0, 1, 1,
+            1, 1, 0, 1, 1, 0,
+            0, 0, 1, 0, 1, 1,
+            0, 0, 0, 0, 1, 1,
+            1, 0, 0, 0, 0, 1,
+            0, 1, 1, 1, 1, 1,
+            1, 1, 0, 1, 0, 1]
+#1111000011001100101010101111
+#0101010101100110011110001111
+final_res = [1, 1, 1, 1, 0, 0, 0,
+             0, 'X', 1, 0, 0, 1, 1,
+             0, 0, 1, 'X', 1, 0, 1,
+             'X', 1, 0, 'X', 1, 1, 1,
+             0, 1, 0, 1, 0, 1, 'X',
+             1, 0, 'X', 1, 0, 0, 1,
+             'X', 0, 0, 1, 1, 1, 1,
+             0, 0, 0, 1, 'X', 1, 1]
 
+res_test = ['X'] * 56
+print("---")
+res_test = reverse_table(CP_2, res_test, test_key)
+print(res_test)
+print(final_res)
+
+# Step 2: C16D16 is the same as C0D0, since the total sum of shifts equals
+# to 28 (all bits stay in same position)
+c0_d0 = [val for val in c16_d16]
+
+# Step 3: Perform reverse permutation on C0D0 to obtain final 64-bit key.
+final_key = ['P'] * 64
+final_key = reverse_table(CP_1, final_key, c0_d0)
+# print(final_key)
+
+print("---")
+final_test = ['P'] * 64
+final_test = reverse_table(CP_1, final_test, res_test)
+print(final_test)
