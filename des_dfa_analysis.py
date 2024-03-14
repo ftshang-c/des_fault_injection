@@ -319,9 +319,37 @@ for curr_sbox in range(8):
 
 
 print(s_box_key_matching_table)
-# for key in s_box_key_matching_table:
-#     print("key:", key)
-#     print(s_box_key_matching_table[key])
-# print(sbox_faulty_cipher_grouped_6_bits)
-# print(real_cipher_6_bits_expanded)
-# print(s_box_key_matching_table)
+
+all_keys = []
+
+# Find the matching key for each sbox
+for curr_sbox in s_box_key_matching_table:
+    # find longest list within s-box
+    print("s-box:", curr_sbox)
+    all_lists = s_box_key_matching_table[curr_sbox]
+    longest_len = 0
+    longest_index = -1
+    for i in range(len(all_lists)):
+        if len(all_lists[i]) > longest_len:
+            longest_len = len(all_lists[i])
+            longest_index = i
+
+   # iterate through longest list to determine whether the value is in all
+# lists
+    longest_lst = all_lists[longest_index]
+    for key in longest_lst:
+        if key in all_lists[0] and key in all_lists[1] and key in all_lists[
+            2] and key in all_lists[3] and key in all_lists[4] and key in \
+                all_lists[5]:
+            all_keys.append(key)
+
+# concatenate all keys together
+key_in_binary = list()
+
+for key in all_keys:
+    bit_val = binvalue(key, 6)
+    bit_val_list = binvalue_to_bit_array(bit_val)
+    print(bit_val)
+    print(bit_val_list)
+    key_in_binary += bit_val_list
+
