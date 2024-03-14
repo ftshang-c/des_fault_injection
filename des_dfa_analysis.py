@@ -1,3 +1,5 @@
+from des import *
+
 PI_1 = [40, 8, 48, 16, 56, 24, 64, 32,
         39, 7, 47, 15, 55, 23, 63, 31,
         38, 6, 46, 14, 54, 22, 62, 30,
@@ -411,7 +413,97 @@ final_key = ['P'] * 64
 final_key = reverse_table(CP_1, final_key, c0_d0)
 # print(final_key)
 
-print("---")
-final_test = ['P'] * 64
-final_test = reverse_table(CP_1, final_test, res_test)
-print(final_test)
+# print("---")
+# final_test = ['P'] * 64
+# final_test = reverse_table(CP_1, final_test, res_test)
+# print(final_test)
+
+X_BIT_1 = 13
+X_BIT_2 = 14
+X_BIT_3 = 18
+X_BIT_4 = 19
+X_BIT_5 = 50
+X_BIT_6 = 53
+X_BIT_7 = 57
+X_BIT_8 = 59
+
+NUM_BIT_1 = 0
+NUM_BIT_2 = 1
+NUM_BIT_3 = 2
+NUM_BIT_4 = 3
+NUM_BIT_5 = 4
+NUM_BIT_6 = 5
+NUM_BIT_7 = 6
+NUM_BIT_8 = 7
+
+# Step 4: Perform exhaustive search on 2^8 possible cases
+possible_eight_keys = {}
+for num in range(pow(2, 8)):
+    num_binval = binvalue(num, 8)
+    num_bit_array = binvalue_to_bit_array(num_binval)
+    possible_eight_keys[num] = num_bit_array
+
+all_possible_64_bit_keys = {}
+
+# Iterate through all 2^8 possible cases:
+for num in range(pow(2, 8)):
+    curr_num = possible_eight_keys[num]
+    final_key_copy = [val for val in final_key]
+    final_key_copy[X_BIT_8] = curr_num[NUM_BIT_1]
+    final_key_copy[X_BIT_7] = curr_num[NUM_BIT_2]
+    final_key_copy[X_BIT_6] = curr_num[NUM_BIT_3]
+    final_key_copy[X_BIT_5] = curr_num[NUM_BIT_4]
+    final_key_copy[X_BIT_4] = curr_num[NUM_BIT_5]
+    final_key_copy[X_BIT_3] = curr_num[NUM_BIT_6]
+    final_key_copy[X_BIT_2] = curr_num[NUM_BIT_7]
+    final_key_copy[X_BIT_1] = curr_num[NUM_BIT_8]
+    all_possible_64_bit_keys[num] = [val for val in final_key_copy]
+
+print(final_key)
+print(all_possible_64_bit_keys)
+
+PARITY_BIT = 7
+
+# Find parity bits
+for key in all_possible_64_bit_keys:
+    sub_blocks = nsplit(all_possible_64_bit_keys[key], 8)
+    # check parity... if odd number of 1s, place a 0.
+    for byte in sub_blocks:
+        num_ones = 0
+        for bit in byte:
+            if bit == 1:
+                num_ones += 1
+        if num_ones % 2 == 0:
+            byte[PARITY_BIT] = 1
+        else:
+            byte[PARITY_BIT] = 0
+    result = list()
+    for byte in sub_blocks:
+        result += byte
+    all_possible_64_bit_keys[key] = [val for val in result]
+
+# last_key = list()
+# for key in all_possible_64_bit_keys:
+#     if (last_key == all_possible_64_bit_keys[key]):
+#         print("error!")
+#     last_key = all_possible_64_bit_keys[key]
+#
+print(all_possible_64_bit_keys)
+
+# Iterate through all possible keys, running DES encryption
+# des = des()
+# for key in all_possible_64_bit_keys:
+#     print(key)
+#     potential_key = all_possible_64_bit_keys[key]
+#     print("potential_key:", potential_key)
+
+ciphertexts = []
+plaintext = "Hello wo"
+for key in all_possible_64_bit_keys:
+    d = des()
+    fault_enable = False
+    curr_key = all_possible_64_bit_keys[key]
+    cipher = d.encrypt(curr_key, plaintext, fault_enable)
+    ciphertexts.append(cipher)
+print(ciphertexts)
+print(real_cipher)
