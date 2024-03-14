@@ -68,14 +68,20 @@ S_BOX = [
      ]
 ]
 
-S_BOX_AFFECTED = {1: [1, 2, 3, 4, 5, 32],
-                  2: [4, 5, 6, 7, 8, 9],
-                  3: [8, 9, 10, 11, 12, 13],
-                  4: [12, 13, 14, 15, 16, 17],
-                  5: [16, 17, 18, 19, 20, 21],
-                  6: [20, 21, 22, 23, 24, 25],
-                  7: [24, 25, 26, 27, 28, 29],
-                  8: [1, 28, 29, 30, 31, 32]}
+P = [16, 7, 20, 21, 29, 12, 28, 17,
+     1, 15, 23, 26, 5, 18, 31, 10,
+     2, 8, 24, 14, 32, 27, 3, 9,
+     19, 13, 30, 6, 22, 11, 4, 25]
+
+# S box as key, storing the affected faults that end up in the S box
+S_BOX_AFFECTED = {0: [1, 2, 3, 4, 5, 32],
+                  1: [4, 5, 6, 7, 8, 9],
+                  2: [8, 9, 10, 11, 12, 13],
+                  3: [12, 13, 14, 15, 16, 17],
+                  4: [16, 17, 18, 19, 20, 21],
+                  5: [20, 21, 22, 23, 24, 25],
+                  6: [24, 25, 26, 27, 28, 29],
+                  7: [1, 28, 29, 30, 31, 32]}
 
 real_cipher_6_bits_expanded = None
 faulty_cipher_6_bits_expanded = {}
@@ -140,21 +146,16 @@ def bit_array_to_decimal(bit_array):
         power -= 1
     return sum
 
-def decimal_to_bit_array():
-    return
+def substitute_six_bits(sbox_input, sbox):
+    row = int(str(sbox_input[0]) + str(sbox_input[5]), 2)
+    column = int(str(sbox_input[1]) + str(sbox_input[2]) + str(sbox_input[3])\
+             + \
+             str(sbox_input[4]), 2)
+    return sbox[row][column]
 
-# substitute - need to change
-# def substitute(d_e):#Substitute bytes using SBOX
-#     subblocks = nsplit(d_e, 6)#Split bit array into sublist of 6 bits
-#     result = list()
-#     for i in range(len(subblocks)): #For all the sublists
-#         block = subblocks[i]
-#         row = int(str(block[0])+str(block[5]),2)#Get the row with the first and last bit
-#         column = int(''.join([str(x) for x in block[1:][:-1]]),2) #Column is the 2,3,4,5th bits
-#         val = S_BOX[i][row][column] #Take the value in the SBOX appropriated for the round (i)
-#         bin = binvalue(val, 4)#Convert the value to binary
-#         result += [int(x) for x in bin]#And append it to the resulting list
-#     return result
+
+real_cipher_r16_block = None
+faulty_cipher_r16_blocks = {}
 
 PI_1_bits = string_to_bit_array(real_cipher[0])
 r16_l16 = [0] * len(PI_1_bits)
@@ -166,17 +167,22 @@ r16_l16_subset = nsplit(r16_l16, 32)
 # Retrieve L16 and R16 blocks
 r16_block = [value for value in r16_l16_subset[0]]
 l16_block = [value for value in r16_l16_subset[1]]
+# Save R16 Block for final comparison
+real_cipher_r16_block = [value for value in r16_block]
+# print(real_cipher_r16_block)
+real_cipher_r16_block = nsplit(real_cipher_r16_block, 4)
+# print(real_cipher_r16_block)
 
 # Retrieve and expand r_15 block out
 r15_block = l16_block
 expanded_r15_block = expand(E, r15_block)
 res = nsplit(expanded_r15_block, 6)
 real_cipher_6_bits_expanded = [val for val in res]
-fault = 0
+fault = 1
 
 # Retrieve and expand r_15 block out for all faulty ciphertexts
-for faulty_text in faulty_ciphertexts:
-    PI_1_bits_faulty = string_to_bit_array(faulty_text)
+for i in range(len(faulty_ciphertexts)):
+    PI_1_bits_faulty = string_to_bit_array(faulty_ciphertexts[i])
     r16_l16_faulty = [0] * len(PI_1_bits_faulty)
 
     r16_l16_faulty = reverse_table(PI_1, r16_l16_faulty, PI_1_bits_faulty)
@@ -185,11 +191,108 @@ for faulty_text in faulty_ciphertexts:
     r16_block_faulty = [value for value in r16_l16_subset_faulty[0]]
     l16_block_faulty = [value for value in r16_l16_subset_faulty[1]]
 
+    faulty_cipher_r16_blocks[fault] = [value for value in r16_block_faulty]
+
     r15_block_faulty = l16_block_faulty
     expanded_r15_block_faulty = expand(E, r15_block_faulty)
+
     res = nsplit(expanded_r15_block_faulty, 6)
     faulty_cipher_6_bits_expanded[fault] = [val for val in res]
     fault += 1
 
-# Brute force every key possibility for each S-BOX
+for key in faulty_cipher_r16_blocks:
+    faulty_cipher_r16_blocks[key] = nsplit(faulty_cipher_r16_blocks[key], 4)
 
+sbox_faulty_cipher_grouped_6_bits = {}
+# retrieve all bits from faulted r15 blocks and put them in their respective
+# s_box group
+for s_box in S_BOX_AFFECTED:
+    current_fault_list = S_BOX_AFFECTED[s_box]
+    for val in current_fault_list:
+        if s_box not in sbox_faulty_cipher_grouped_6_bits:
+            sbox_faulty_cipher_grouped_6_bits[s_box] = list()
+        sbox_faulty_cipher_grouped_6_bits[s_box].append(
+            faulty_cipher_6_bits_expanded[val][s_box])
+
+# initialize all the 6-bit key possibilities
+six_bit_keys_possibilities = {}
+for i in range(64):
+    str_bit_value = binvalue(i, 6)
+    six_bit_keys_possibilities[i] = binvalue_to_bit_array(str_bit_value)
+
+s_box_key_matching_table = {0: list(),
+                            1: list(),
+                            2: list(),
+                            3: list(),
+                            4: list(),
+                            5: list(),
+                            6: list(),
+                            7: list()}
+
+# Brute force every key possibility for each S-BOX
+# for curr_sbox in range(8):
+#     all_combos = sbox_faulty_cipher_grouped_6_bits[curr_sbox]
+#     for block in all_combos:
+#         faulted_list = list()
+#         for key_val in range(64):
+#                 curr_key_value = six_bit_keys_possibilities[key_val]
+#                 curr_SBOX_table = S_BOX[curr_sbox]
+#                 s_box_fault_input = xor_function(block, curr_key_value)
+#                 faulty_result = substitute_six_bits(s_box_fault_input,
+#                                              curr_SBOX_table)
+#                 s_box_real_input = xor_function(real_cipher_6_bits_expanded[
+#                                                     curr_sbox], curr_key_value)
+#                 real_result = substitute_six_bits(s_box_real_input,
+#                                                   curr_SBOX_table)
+#                 # print("real result: " + str(real_result) + " faulty result: "
+#                 #       + str(faulty_result))
+#
+#                 if (real_result == faulty_result):
+#                     faulted_list.append(bit_array_to_decimal(six_bit_keys_possibilities[
+#                                             key_val]))
+#         s_box_key_matching_table[curr_sbox].append(faulted_list)
+
+# Brute force every key possibility for each S-BOX
+for curr_sbox in range(8):
+    curr_fault_list = S_BOX_AFFECTED[curr_sbox]
+    for fault_num in curr_fault_list:
+        curr_r16 = real_cipher_r16_block[curr_sbox]
+        curr_r16_fault = faulty_cipher_r16_blocks[fault_num][curr_sbox]
+
+        r16_xor_r16_fault = xor_function(curr_r16, curr_r16_fault)
+        # print(r16_xor_r16_fault)
+        # print(bit_array_to_decimal(r16_xor_r16_fault))
+
+        all_combos = sbox_faulty_cipher_grouped_6_bits[curr_sbox]
+        for fault_block in all_combos:
+            hypotheses = list()
+            for key_val in range(64):
+                curr_key_block = six_bit_keys_possibilities[key_val]
+                curr_sbox_table = S_BOX[curr_sbox]
+
+                # S(E(R'15) XOR K16)
+                sbox_fault_input = xor_function(fault_block, curr_key_block)
+                faulty_result = substitute_six_bits(sbox_fault_input, curr_sbox_table)
+                faulty_result_bit_array = binvalue_to_bit_array(binvalue(
+                    faulty_result, 4))
+
+                # S(E(R15) XOR K16)
+                real_block = real_cipher_6_bits_expanded[curr_sbox]
+                sbox_real_input = xor_function(real_block, curr_key_block)
+                real_result = substitute_six_bits(sbox_real_input, curr_sbox_table)
+                real_result_bit_array = binvalue_to_bit_array(binvalue(
+                    real_result, 4))
+
+                # S(E(R'15) XOR K16) XOR S(E(R15) XOR K16)
+                resultant_xor = xor_function(faulty_result_bit_array,
+                                             real_result_bit_array)
+
+                print("resultant_xor:", resultant_xor)
+                print("r16_xor_r16_fault:", r16_xor_r16_fault)
+                print("------")
+
+                if (resultant_xor == r16_xor_r16_fault):
+                    hypotheses.append(curr_key_block)
+            s_box_key_matching_table[curr_sbox].append(hypotheses)
+
+print(s_box_key_matching_table)
