@@ -181,68 +181,42 @@ class des():
 
         result = list()
         result += self.permut(right16_block + left16_block, PI_1)
-        final_res = bit_array_to_string(result)
+        final_res = hex(bit_array_to_decimal(result))
         self.ciphered_faulty.append(final_res)
 
     def run_with_fault(self, key, text, action=ENCRYPT, padding=False):
-        if len(key) < 8:
-            raise "Key Should be 8 bytes long"
-        elif len(key) > 8:
-            key = key[:8]  # If key size is above 8bytes, cut to be 8bytes long
-
         self.password = key
-        self.text = text
-
-        if padding and action == ENCRYPT:
-            self.addPadding()
-        elif len(
-                self.text) % 8 != 0:  # If not padding specified data size must be multiple of 8 bytes
-            raise "Data size should be multiple of 8"
-
+        self.text = binvalue_to_bit_array(binvalue(text, 64))
         self.generatekeys()  # Generate all the keys
-        text_blocks = nsplit(self.text,
-                             8)  # Split the text in blocks of 8 bytes so 64 bits
+
+        block = [val for val in self.text]
+        block = self.permut(block, PI)
+        g, d = nsplit(block, 32)  # g(LEFT), d(RIGHT)
         result = list()
-        for block in text_blocks:  # Loop over all the blocks of data
-            block = string_to_bit_array(
-                block)  # Convert the block in bit array
-            block = self.permut(block, PI)  # Apply the initial permutation
-            g, d = nsplit(block, 32)  # g(LEFT), d(RIGHT)
-            tmp = None
-            for i in range(16):  # Do the 16 rounds
-                if (i == 15):
-                    # perform fault injections
-                    for fault_num in range(32):
-                        cpy_right = [value for value in d]
-                        cpy_left = [value for value in g]
-                        # print("cpy_right value:", cpy_right)
-                        self.fault_injection(cpy_left, cpy_right, fault_num
-                                             + 1, i)
-                d_e = self.expand(d, E)  # Expand d to match Ki size (48bits)
-                if action == ENCRYPT:
-                    tmp = self.xor(self.keys[i], d_e)  # If encrypt use Ki
-                else:
-                    tmp = self.xor(self.keys[15 - i],
-                                   d_e)  # If decrypt start by the last key
-                tmp = self.substitute(tmp)  # Method that will apply the SBOXes
-                tmp = self.permut(tmp, P)
-                tmp = self.xor(g, tmp)
-                # LEFT = RIGHT - 1
-                g = d
-                # RIGHT = LEFT - 1 XOR f(RIGHT - 1, K_N)
-                d = tmp
-            # d + g, so d is R and g is L
-            result += self.permut(d + g,
-                                  PI_1)  # Do the last permut and append the result to result
-        final_res = bit_array_to_string(result)
-        if self.ciphered_real is None:
-            self.ciphered_real = []
-        self.ciphered_real.append(final_res)
-        if padding and action == DECRYPT:
-            return self.removePadding(
-                final_res)  # Remove the padding if decrypt and padding is true
-        else:
-            return final_res  # Return the final string of data ciphered/deciphered
+        tmp = None
+        for i in range(16):  # Do the 16 rounds
+            if (i == 15):
+                # perform fault injections
+                for fault_num in range(32):
+                    cpy_right = cpy_right = [value for value in d]
+                    cpy_left = [value for value in g]
+                    self.fault_injection(cpy_left, cpy_right, fault_num + 1, i)
+            d_e = self.expand(d, E)  # Expand d to match Ki size (48bits)
+            if action == ENCRYPT:
+                tmp = self.xor(self.keys[i], d_e)  # If encrypt use Ki
+            else:
+                tmp = self.xor(self.keys[15 - i],
+                               d_e)  # If decrypt start by the last key
+            tmp = self.substitute(tmp)  # Method that will apply the SBOXes
+            tmp = self.permut(tmp, P)
+            tmp = self.xor(g, tmp)
+            g = d
+            d = tmp
+        result += self.permut(d + g, PI_1)
+        final_res = hex(bit_array_to_decimal(result))
+
+        self.ciphered_real = [final_res]
+        return final_res
 
     def run(self, key, text, action=ENCRYPT, padding=False):
 
@@ -338,8 +312,6 @@ class des():
     def get_ciphertext_faulty(self):
         return self.ciphered_faulty
 
-def hex_to_dec(hex_val):
-    pass
 
 def bit_array_to_decimal(bit_array):
     power = len(bit_array) - 1
@@ -366,7 +338,6 @@ def hex_string_to_decimal(hex_string):
     return sum
 
 
-
 if __name__ == '__main__':
     message = 0x0123456789ABCDEF
     bi_val = binvalue(message, 64)
@@ -376,10 +347,11 @@ if __name__ == '__main__':
     # text = "Hello wo"
     # fault_enable = True
     d = des()
-    r = d.encrypt(key, message, False)
-    # c = d.decrypt(key, message)
-    c = d.decrypt(key, hex_string_to_decimal(r))
-    print(c)
+    rl_d = des()
+    r = d.encrypt(key, message, True)
+    r2 = d.encrypt(key, message, False)
+    print(r)
+    print(r2)
     # print(c)
     # print("Ciphered: %r" % r)
     # print(d.get_ciphertext_real())
