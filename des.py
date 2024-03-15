@@ -352,6 +352,9 @@ if __name__ == '__main__':
     r2 = d.encrypt(key, message, False)
     print(r)
     print(r2)
+
+    print(d.get_ciphertext_real())
+    print(d.get_ciphertext_faulty())
     # print(c)
     # print("Ciphered: %r" % r)
     # print(d.get_ciphertext_real())
