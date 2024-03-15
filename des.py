@@ -245,50 +245,32 @@ class des():
             return final_res  # Return the final string of data ciphered/deciphered
 
     def run(self, key, text, action=ENCRYPT, padding=False):
-        if len(key) < 8:
-            raise "Key Should be 8 bytes long"
-        elif len(key) > 8:
-            key = key[:8]  # If key size is above 8bytes, cut to be 8bytes long
 
         self.password = key
-        self.text = text
-
-        if padding and action == ENCRYPT:
-            self.addPadding()
-        elif len(
-                self.text) % 8 != 0:  # If not padding specified data size must be multiple of 8 bytes
-            raise "Data size should be multiple of 8"
+        self.text = binvalue_to_bit_array(binvalue(text, 64))
 
         self.generatekeys()  # Generate all the keys
-        text_blocks = nsplit(self.text,
-                             8)  # Split the text in blocks of 8 bytes so 64 bits
+
         result = list()
-        for block in text_blocks:  # Loop over all the blocks of data
-            block = string_to_bit_array(
-                block)  # Convert the block in bit array
-            block = self.permut(block, PI)  # Apply the initial permutation
-            g, d = nsplit(block, 32)  # g(LEFT), d(RIGHT)
-            tmp = None
-            for i in range(16):  # Do the 16 rounds
-                d_e = self.expand(d, E)  # Expand d to match Ki size (48bits)
-                if action == ENCRYPT:
-                    tmp = self.xor(self.keys[i], d_e)  # If encrypt use Ki
-                else:
-                    tmp = self.xor(self.keys[15 - i],
-                                   d_e)  # If decrypt start by the last key
-                tmp = self.substitute(tmp)  # Method that will apply the SBOXes
-                tmp = self.permut(tmp, P)
-                tmp = self.xor(g, tmp)
-                g = d
-                d = tmp
-            result += self.permut(d + g,
-                                  PI_1)  # Do the last permut and append the result to result
-        final_res = bit_array_to_string(result)
-        if padding and action == DECRYPT:
-            return self.removePadding(
-                final_res)  # Remove the padding if decrypt and padding is true
-        else:
-            return final_res  # Return the final string of data ciphered/deciphered
+        block = [val for val in self.text]
+        block = self.permut(block, PI)  # Apply the initial permutation
+        g, d = nsplit(block, 32)  # g(LEFT), d(RIGHT)
+        tmp = None
+        for i in range(16):  # Do the 16 rounds
+            d_e = self.expand(d, E)  # Expand d to match Ki size (48bits)
+            if action == ENCRYPT:
+                tmp = self.xor(self.keys[i], d_e)  # If encrypt use Ki
+            else:
+                tmp = self.xor(self.keys[15 - i],
+                               d_e)  # If decrypt start by the last key
+            tmp = self.substitute(tmp)  # Method that will apply the SBOXes
+            tmp = self.permut(tmp, P)
+            tmp = self.xor(g, tmp)
+            g = d
+            d = tmp
+        result += self.permut(d + g, PI_1)
+        final_res = hex(bit_array_to_decimal(result))
+        return final_res
 
     def substitute(self, d_e):  # Substitute bytes using SBOX
         subblocks = nsplit(d_e, 6)  # Split bit array into sublist of 6 bits
@@ -319,7 +301,7 @@ class des():
 
     def generatekeys(self):  # Algorithm that generates all the keys
         self.keys = []
-        key = string_to_bit_array(self.password)
+        key = binvalue_to_bit_array(binvalue(self.password, 64))
         key = self.permut(key, CP_1)  # Apply the initial permut on the key
         g, d = nsplit(key, 28)  # Split it in to (g->LEFT),(d->RIGHT)
         for i in range(16):  # Apply the 16 rounds
@@ -356,12 +338,49 @@ class des():
     def get_ciphertext_faulty(self):
         return self.ciphered_faulty
 
+def hex_to_dec(hex_val):
+    pass
+
+def bit_array_to_decimal(bit_array):
+    power = len(bit_array) - 1
+    sum = 0
+    for bit_value in bit_array:
+        if (int(bit_value) == 1):
+            sum += pow(2, power)
+        power -= 1
+    return sum
+
+def hex_string_to_decimal(hex_string):
+    table = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5,
+             '6': 6, '7': 7, '8': 8, '9': 9, 'a': 10, 'A': 10,
+             'b': 11, 'B': 11, 'c': 12, 'C': 12, 'd': 13, 'D': 13,
+             'e': 14, 'E': 14, 'f': 15, 'F': 15
+             }
+
+    start_power = len(hex_string) - 3
+    start_index = 2
+    sum = 0
+    for i in range(start_index, len(hex_string)):
+        sum += table[hex_string[i]] * pow(16, start_power)
+        start_power -= 1
+    return sum
+
+
+
 if __name__ == '__main__':
-    key = "secret_k"
-    text = "Hello wo"
-    fault_enable = True
+    message = 0x0123456789ABCDEF
+    bi_val = binvalue(message, 64)
+    bi_val_arr = binvalue_to_bit_array(bi_val)
+    key = 0x133457799BBCDFF1
+    # key = "secret_k"
+    # text = "Hello wo"
+    # fault_enable = True
     d = des()
-    r = d.encrypt(key, text, fault_enable)
-    print("Ciphered: %r" % r)
-    print(d.get_ciphertext_real())
-    print(d.get_ciphertext_faulty())
+    r = d.encrypt(key, message, False)
+    # c = d.decrypt(key, message)
+    c = d.decrypt(key, hex_string_to_decimal(r))
+    print(c)
+    # print(c)
+    # print("Ciphered: %r" % r)
+    # print(d.get_ciphertext_real())
+    # print(d.get_ciphertext_faulty())
