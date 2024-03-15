@@ -157,6 +157,19 @@ class des():
         self.ciphered_real = None
         self.ciphered_faulty = None
 
+    def check_odd_parity_for_key(self, key):
+        bit_arr = binvalue_to_bit_array(binvalue(key, 64))
+        curr_byte = None
+        for i in range(0, len(bit_arr), 8):
+            curr_byte = bit_arr[i:i+8]
+            num_of_ones = 0
+            for bit in curr_byte:
+                if bit == 1:
+                    num_of_ones += 1
+            if num_of_ones % 2 == 0:
+                return False
+        return True
+
     def fault_injection(self, left15_block, right15_block, fault_num, key):
         fault_arr = binvalue_to_bit_array(binvalue(pow(2,32 - fault_num), 32))
 
@@ -180,8 +193,9 @@ class des():
             self.ciphered_faulty = []
 
         result = list()
-        result += self.permut(right16_block + left16_block, PI_1)
-        final_res = hex(bit_array_to_decimal(result))
+        result = self.permut(right16_block + left16_block, PI_1)
+
+        final_res = bit_array_to_hex_string(result)
         self.ciphered_faulty.append(final_res)
 
     def run_with_fault(self, key, text, action=ENCRYPT, padding=False):
@@ -212,8 +226,8 @@ class des():
             tmp = self.xor(g, tmp)
             g = d
             d = tmp
-        result += self.permut(d + g, PI_1)
-        final_res = hex(bit_array_to_decimal(result))
+        result = self.permut(d + g, PI_1)
+        final_res = bit_array_to_hex_string(result)
 
         self.ciphered_real = [final_res]
         return final_res
@@ -243,7 +257,7 @@ class des():
             g = d
             d = tmp
         result += self.permut(d + g, PI_1)
-        final_res = hex(bit_array_to_decimal(result))
+        final_res = bit_array_to_hex_string(result)
         return final_res
 
     def substitute(self, d_e):  # Substitute bytes using SBOX
@@ -298,12 +312,27 @@ class des():
         return data[:-pad_len]
 
     def encrypt(self, key, text, fault_enable, padding=False):
+        if (key >= pow(2, 64)) or (text >= pow(2, 64)):
+            raise InvalidLength("Key or plaintext can't be greater than 16 "
+                                "bytes (64-bits max).")
+
+        if type(key) is not int or type(text) is not int:
+            raise InvalidKeyFormat("Plaintext and key must be inputted as an "
+                            "integer.")
+
+        if (not self.check_odd_parity_for_key(key)):
+            raise EvenParityException("Key must be odd parity for DES. Please check "
+                            "that each byte in the key has an odd number of "
+                            "1s.")
+
+
         if (fault_enable):
             return self.run_with_fault(key, text, ENCRYPT, padding)
         else:
             return self.run(key, text, ENCRYPT, padding)
 
     def decrypt(self, key, text, padding=False):
+
         return self.run(key, text, DECRYPT, padding)
 
     def get_ciphertext_real(self):
@@ -333,28 +362,64 @@ def hex_string_to_decimal(hex_string):
     start_index = 2
     sum = 0
     for i in range(start_index, len(hex_string)):
-        sum += table[hex_string[i]] * pow(16, start_power)
+        sum += (table[hex_string[i]] * pow(16, start_power))
         start_power -= 1
     return sum
 
+def bit_array_to_hex_string(bit_array):
+    table = {'0000': '0',
+             '0001': '1',
+             '0010': '2',
+             '0011': '3',
+             '0100': '4',
+             '0101': '5',
+             '0110': '6',
+             '0111': '7',
+             '1000': '8',
+             '1001': '9',
+             '1010': 'A',
+             '1011': 'B',
+             '1100': 'C',
+             '1101': 'D',
+             '1110': 'E',
+             '1111': 'F'
+             }
+    returned_str = "0x"
+    for i in range(0, len(bit_array), 4):
+        curr_nibble = bit_array[i:i+4]
+        str_bit = ""
+        for bit in curr_nibble:
+            str_bit += str(bit)
+        returned_str += table[str_bit]
+    return returned_str
+
+class EvenParityException(Exception):
+    pass
+
+class InvalidKeyFormat(Exception):
+    pass
+
+class InvalidLength(Exception):
+    pass
 
 if __name__ == '__main__':
-    message = 0x0123456789ABCDEF
-    bi_val = binvalue(message, 64)
-    bi_val_arr = binvalue_to_bit_array(bi_val)
-    key = 0x133457799BBCDFF1
-    # key = "secret_k"
-    # text = "Hello wo"
-    # fault_enable = True
-    d = des()
-    rl_d = des()
-    r = d.encrypt(key, message, True)
-    r2 = d.encrypt(key, message, False)
-    print(r)
-    print(r2)
+    message = 0xBCDE
+    key = 0x10151FECD02ABF5E
+    try:
+        d = des()
+        r = d.encrypt(key, message, True)
+        print(r)
+        print(d.get_ciphertext_real())
+        print(d.get_ciphertext_faulty())
+    except EvenParityException:
+        print("Key is even parity. Please try again with an odd parity as "
+              "required by DES.")
+    except InvalidKeyFormat:
+        print("Plaintext and key must be inputted as an "
+                            "integer. Please try again.")
+    except InvalidLength:
+        print("Plaintext and key must be at most 16 bytes (64-bits) long.")
 
-    print(d.get_ciphertext_real())
-    print(d.get_ciphertext_faulty())
     # print(c)
     # print("Ciphered: %r" % r)
     # print(d.get_ciphertext_real())

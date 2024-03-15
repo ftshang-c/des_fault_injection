@@ -106,10 +106,20 @@ S_BOX_AFFECTED = {0: [1, 2, 3, 4, 5, 32],
 real_cipher_6_bits_expanded = None
 faulty_cipher_6_bits_expanded = {}
 
-real_cipher = ['0x85e813540f0ab405']
-faulty_ciphertexts = ['0x85e813500f0bb491', '0x85ec13540f0a3401',
-              '0x85ec13540f8ab415', '0x85e913548e0af415', '0x85ec13c40e0ab015', '0x85e893440f0ab005', '0x856813440e0ab405', '0x11e852440f0af005', '0x91e853440f0af025', '0x91e852540f0a9405', '0x91e813540f2ab405', '0x81e812542f0aa545', '0x81e853740f0aa505', '0x85e833540b0aa405', '0x85c813540b0ab505', '0xe5e803540f0aa444', '0xc5e803540f4ab54d', '0xc5e803540f4abc04', '0xc5e803540f02b405', '0xc5e80355071ab404', '0x85e8035c4f0eb404', '0x85e81b554f0eb405', '0x85e013554f1ab405', '0x8ce813551f1ab405', '0x85e817555f1ab407', '0x84e813541f0ab605', '0x84e817540f08b405', '0x84b813101d0bb405', '0x85b817161f0bb405', '0x85f811100f0bb405', '0x85ea13100f0ab405', '0x87fd13100f0ab405']
 
+# real_cipher = ['0x734328A6ADD705B9']
+# faulty_ciphertexts = ['0x734328A2ADD6052D', '0x734628A6ADD785B9',
+#               '0x734228A6AD5705BD', '0x734228B62CD745AD', '0x73422826ACD745A9', '0x7343A8B6ACD745B9', '0x73C328A6ACD741B9', '0xE34329A6ACD701B9', '0x674369B6ACD70199', '0x674329A6ADD725B9', '0x634369A6ADF705B9', '0x774329A68DD715F9', '0x73436986ADD714F9', '0x734308A6ADD715F9', '0x736328A6A9D714F9', '0x134338A6A99704F8', '0x734338A6A99705F0', '0x334328A6AD970DB8', '0x734338A6ADDF05B8', '0x334328A6E58305B9', '0x734338AEADC305B8', '0x734320A6EDC305B9', '0x734B28A7EDC705B9', '0x7B0328A6FDC705B9', '0x73032CA6FDC305BB', '0x72032CA6ADD707B9', '0x73432CA6BDD505B9', '0x72132CE2BFD705B9', '0x721328A0ADD705B9', '0x73432AE2ADD705B9', '0x735128E6ADD605B9', '0x714228E2ADD605BD']
+
+
+real_cipher = ['0x1C45380C5F4E99CB']
+faulty_ciphertexts = ['0x1C50384C5F4F994F', '0x1C40380C5F4E19CB',
+              '0x1C41380C5FCE99DB', '0x1C45381CDE4EDDDF', '0x1C45388C5E4ED9DF', '0x1C45B80C5E4EDDCB', '0x1CC5381C5F4ED9CB', '0x8845791C5E4ED9CB', '0x0845780C5E4EDDEB', '0x0845790C5F4EB9CB', '0x0845380C5F6E99CB', '0x1845390C7B4E988B', '0x1845782C5F4E88CB', '0x1C45180C5F4E888B', '0x1C65380C5B4E98CB', '0x3C45280C5B0E89CA', '0x5C45380C5F0E9882', '0x5C45380C5F0E91CB', '0x1C45380C5F0699CA', '0x1C45280D574A99CA', '0x5C4538051F0A99CB', '0x1C45300D5F5E99CB', '0x1C4D380C5F5A99CB', '0x1405380C0F5A99CB', '0x1D053C0C5F5A99C9', '0x1D05380C4F4E9BCB', '0x1D453C0C5F4C99CB', '0x1C1538484D4E99CB', '0x1C053C4A4F4F99CB', '0x1C553A485F4E99CB', '0x1C47384C5F4F99CB', '0x1E50384C5F4F99CB']
+
+# real_cipher = ['0x85e813540f0ab405']
+# faulty_ciphertexts = ['0x85e813500f0bb491', '0x85ec13540f0a3401',
+#               '0x85ec13540f8ab415', '0x85e913548e0af415', '0x85ec13c40e0ab015', '0x85e893440f0ab005', '0x856813440e0ab405', '0x11e852440f0af005', '0x91e853440f0af025', '0x91e852540f0a9405', '0x91e813540f2ab405', '0x81e812542f0aa545', '0x81e853740f0aa505', '0x85e833540b0aa405', '0x85c813540b0ab505', '0xe5e803540f0aa444', '0xc5e803540f4ab54d', '0xc5e803540f4abc04', '0xc5e803540f02b405', '0xc5e80355071ab404', '0x85e8035c4f0eb404', '0x85e81b554f0eb405', '0x85e013554f1ab405', '0x8ce813551f1ab405', '0x85e817555f1ab407', '0x84e813541f0ab605', '0x84e817540f08b405', '0x84b813101d0bb405', '0x85b817161f0bb405', '0x85f811100f0bb405', '0x85ea13100f0ab405', '0x87fd13100f0ab405']
+#
 
 
 def string_to_bit_array(text):  # Convert a string into a list of bits
@@ -189,6 +199,32 @@ def hex_string_to_decimal(hex_string):
         start_power -= 1
     return sum
 
+def bit_array_to_hex_string(bit_array):
+    table = {'0000': '0',
+             '0001': '1',
+             '0010': '2',
+             '0011': '3',
+             '0100': '4',
+             '0101': '5',
+             '0110': '6',
+             '0111': '7',
+             '1000': '8',
+             '1001': '9',
+             '1010': 'A',
+             '1011': 'B',
+             '1100': 'C',
+             '1101': 'D',
+             '1110': 'E',
+             '1111': 'F'
+             }
+    returned_str = "0x"
+    for i in range(0, len(bit_array), 4):
+        curr_nibble = bit_array[i:i+4]
+        str_bit = ""
+        for bit in curr_nibble:
+            str_bit += str(bit)
+        returned_str += table[str_bit]
+    return returned_str
 
 real_cipher_r16_block = None
 faulty_cipher_r16_blocks = {}
@@ -208,7 +244,6 @@ r16_block = [value for value in r16_l16_subset[0]]
 l16_block = [value for value in r16_l16_subset[1]]
 # Save R16 Block for final comparison
 real_cipher_r16_block = [value for value in r16_block]
-print(real_cipher_r16_block)
 # real_cipher_r16_block = nsplit(real_cipher_r16_block, 4)
 # print(real_cipher_r16_block)
 
@@ -242,13 +277,8 @@ for i in range(len(faulty_ciphertexts)):
 
 r16_xor_r16_fault_tabled = {}
 for key in faulty_cipher_r16_blocks:
-    print("key:", key)
     block = faulty_cipher_r16_blocks[key]
-    print("r16':", block)
-    print("r16 :", real_cipher_r16_block)
-
     r16_xor_r16_fault_tabled[key] = xor_function(block, real_cipher_r16_block)
-    print("XOR :", r16_xor_r16_fault_tabled[key])
 
 # inverse the permutation on r16 ^ r16'
 r16_xor_r16_fault_tabled_inversed_p = {}
@@ -258,9 +288,6 @@ for key in r16_xor_r16_fault_tabled:
     r16_xor_r16_fault_tabled_inversed_p[key] = reverse_table(P,
                                                              reversed_block,
                                                              block)
-    print("input:    ", block)
-    print("reversed: ", r16_xor_r16_fault_tabled_inversed_p[key])
-
 # print(r16_xor_r16_fault_tabled_inversed_p)
 r16_xor_results_grouped_by_fault = {}
 for fault_num in r16_xor_r16_fault_tabled_inversed_p:
@@ -280,8 +307,6 @@ for s_box in S_BOX_AFFECTED:
             sbox_faulty_cipher_grouped_6_bits[s_box] = list()
         sbox_faulty_cipher_grouped_6_bits[s_box].append(
             faulty_cipher_6_bits_expanded[val][s_box])
-
-print("sbox_faulty_cipher_grouped_6_bits:", sbox_faulty_cipher_grouped_6_bits)
 
 # initialize all the 6-bit key possibilities
 six_bit_keys_possibilities = {}
@@ -305,6 +330,8 @@ for curr_sbox in range(8):
     for fault_id in curr_fault_list:
         curr_r16_xor_r16_fault_block = r16_xor_results_grouped_by_fault[
             fault_id][curr_sbox]
+        if curr_r16_xor_r16_fault_block == [0, 0, 0, 0]:
+            continue
         hypotheses = list()
         for key in range(64):
             key_block = six_bit_keys_possibilities[key]
@@ -332,14 +359,11 @@ for curr_sbox in range(8):
         s_box_key_matching_table[curr_sbox].append([val for val in hypotheses])
 
 
-print(s_box_key_matching_table)
-
 all_keys = []
 
 # Find the matching key for each sbox
 for curr_sbox in s_box_key_matching_table:
     # find longest list within s-box
-    print("s-box:", curr_sbox)
     all_lists = s_box_key_matching_table[curr_sbox]
     longest_len = 0
     longest_index = -1
@@ -356,12 +380,9 @@ for curr_sbox in s_box_key_matching_table:
             2] and key in all_lists[3] and key in all_lists[4] and key in \
                 all_lists[5]:
             all_keys.append(key)
-            continue
 
 # concatenate all keys together
 key_in_binary = list()
-
-print(all_keys)
 
 for key in all_keys:
     bit_val = binvalue(key, 6)
@@ -369,6 +390,9 @@ for key in all_keys:
     # print(bit_val)
     # print(bit_val_list)
     key_in_binary += bit_val_list
+
+k16_obtained = bit_array_to_hex_string(key_in_binary)
+print("K16 obtained:", k16_obtained)
 
 # print(key_in_binary)
 # Step 1: Perform a reverse permutation PC2-1(K16) to obtain C16 and D16
@@ -382,11 +406,6 @@ c0_d0 = [val for val in c16_d16]
 # Step 3: Perform reverse permutation on C0D0 to obtain final 64-bit key.
 final_key = ['P'] * 64
 final_key = reverse_table(CP_1, final_key, c0_d0)
-
-# print("---")
-# final_test = ['P'] * 64
-# final_test = reverse_table(CP_1, final_test, res_test)
-# print(final_test)
 
 X_BIT_1 = 13
 X_BIT_2 = 14
@@ -420,14 +439,14 @@ all_possible_64_bit_keys = {}
 for num in range(pow(2, 8)):
     curr_num = possible_eight_keys[num]
     final_key_copy = [val for val in final_key]
-    final_key_copy[X_BIT_8] = curr_num[NUM_BIT_8]
-    final_key_copy[X_BIT_7] = curr_num[NUM_BIT_7]
-    final_key_copy[X_BIT_6] = curr_num[NUM_BIT_6]
-    final_key_copy[X_BIT_5] = curr_num[NUM_BIT_5]
-    final_key_copy[X_BIT_4] = curr_num[NUM_BIT_4]
-    final_key_copy[X_BIT_3] = curr_num[NUM_BIT_3]
-    final_key_copy[X_BIT_2] = curr_num[NUM_BIT_2]
-    final_key_copy[X_BIT_1] = curr_num[NUM_BIT_1]
+    final_key_copy[X_BIT_8] = curr_num[NUM_BIT_1]
+    final_key_copy[X_BIT_7] = curr_num[NUM_BIT_2]
+    final_key_copy[X_BIT_6] = curr_num[NUM_BIT_3]
+    final_key_copy[X_BIT_5] = curr_num[NUM_BIT_4]
+    final_key_copy[X_BIT_4] = curr_num[NUM_BIT_5]
+    final_key_copy[X_BIT_3] = curr_num[NUM_BIT_6]
+    final_key_copy[X_BIT_2] = curr_num[NUM_BIT_7]
+    final_key_copy[X_BIT_1] = curr_num[NUM_BIT_8]
     all_possible_64_bit_keys[num] = [val for val in final_key_copy]
 
 PARITY_BIT = 7
@@ -454,24 +473,19 @@ for key in all_possible_64_bit_keys:
 # Iterate through all possible keys, running DES encryption
 
 ciphertexts = {}
-plaintext = "Hello wo"
 for key in all_keys_with_parity_bits:
     d = des()
-    message = 0x0123456789ABCDEF
+    message = 0x00BCDE
     curr_key = bit_array_to_decimal(all_keys_with_parity_bits[key])
     fault_enable = False
     cipher_result = d.encrypt(curr_key, message,
                               fault_enable)
     ciphertexts[key] = cipher_result
 
-print(ciphertexts)
-
 key_obtained = None
 for key in ciphertexts:
     if real_cipher[0] == ciphertexts[key]:
-        key_obtained = hex(bit_array_to_decimal(all_keys_with_parity_bits[
-                                                    key]))
+        key_obtained = bit_array_to_hex_string(all_keys_with_parity_bits[key])
+
 print("obtained key:", key_obtained)
-
-
 
